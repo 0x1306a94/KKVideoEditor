@@ -122,7 +122,7 @@
         overlayImage = [overlayImage imageByApplyingTransform:CGAffineTransformMakeTranslation(tx, ty)];
         //        overlayImage = [overlayImage imageByApplyingTransform:CGAffineTransformMakeRotation(angle)];
     } else {
-        CGFloat tx = CGRectGetWidth(desImage.extent) - CGRectGetWidth(desImage.extent) * percent;
+        CGFloat tx = CGRectGetWidth(desImage.extent) - (CGRectGetWidth(desImage.extent) + CGRectGetWidth(overlayImage.extent)) * percent;
         CGFloat ty = (CGRectGetHeight(desImage.extent) - CGRectGetHeight(overlayImage.extent)) * 0.5;
 
         //        CIColor *startColor   = CIColor.yellowColor;
@@ -175,6 +175,8 @@
             CVPixelBufferRef resultPixels = [self newRenderedPixelBufferForRequest:request];
             if (resultPixels) {
                 [request finishWithComposedVideoFrame:resultPixels];
+                // 释放内存,否则会持续增长内存,最终导致crash
+                CVPixelBufferRelease(resultPixels);
             } else {
                 [request finishWithError:[NSError errorWithDomain:@"VideoEditor" code:400 userInfo:nil]];
             }

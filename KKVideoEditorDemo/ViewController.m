@@ -157,7 +157,7 @@
         CIImage *overlayImage     = [CIImage imageWithContentsOfURL:url];
         overlayImage              = [overlayImage imageByApplyingTransform:CGAffineTransformMakeScale(0.35, 0.35)];
         instruction1.overlayImage = overlayImage;
-        instruction1.filterName   = @"CIPhotoEffectProcess";
+        instruction1.filterName   = @"CIPhotoEffectInstant";
     }
 
     KKVideoCompositionInstruction *instruction2 = [[KKVideoCompositionInstruction alloc] initWithTimeRange:CMTimeRangeMake(CMTimeMake(5 * timescale, timescale), CMTimeMake(5 * timescale, timescale))];
