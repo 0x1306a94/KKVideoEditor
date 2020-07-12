@@ -12,8 +12,8 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface KKVideoCompositor : NSObject <AVVideoCompositing>
-@property (nonatomic, readonly, copy, nullable) NSDictionary<NSString *, id> *sourcePixelBufferAttributes;
-@property (nonatomic, readonly, copy) NSDictionary<NSString *, id> *requiredPixelBufferAttributesForRenderContext;
+@property (nonatomic, readonly, nullable) NSDictionary<NSString *, id> *sourcePixelBufferAttributes;
+@property (nonatomic, readonly) NSDictionary<NSString *, id> *requiredPixelBufferAttributesForRenderContext;
 
 - (void)renderContextChanged:(AVVideoCompositionRenderContext *)newRenderContext;
 

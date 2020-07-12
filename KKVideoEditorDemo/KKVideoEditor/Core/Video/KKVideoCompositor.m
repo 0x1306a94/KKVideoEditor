@@ -15,14 +15,13 @@
 #import <Metal/Metal.h>
 
 @interface KKVideoCompositor ()
-@property (nonatomic, copy, nullable) NSDictionary<NSString *, id> *sourcePixelBufferAttributes;
-@property (nonatomic, copy) NSDictionary<NSString *, id> *requiredPixelBufferAttributesForRenderContext;
-
 @property (nonatomic, strong) dispatch_queue_t renderContextQueue;
 @property (nonatomic, strong) dispatch_queue_t renderingQueue;
 @property (nonatomic, assign) BOOL renderContextDidChange;
 @property (nonatomic, assign) BOOL shouldCancelAllRequests;
 @property (nonatomic, strong) AVVideoCompositionRenderContext *renderContext;
+
+@property (nonatomic, assign) CGColorSpaceRef colorSpaceRef;
 @end
 
 @implementation KKVideoCompositor
@@ -44,17 +43,19 @@
 }
 
 - (void)commonInit {
-    self.renderContextQueue      = dispatch_queue_create("com.0x1306a94.videoeditor.renderContextQueue", DISPATCH_QUEUE_SERIAL);
-    self.renderingQueue          = dispatch_queue_create("com.0x1306a94.videoeditor.renderingQueue", DISPATCH_QUEUE_SERIAL);
-    self.renderContextDidChange  = NO;
-    self.shouldCancelAllRequests = NO;
+    _renderContextQueue      = dispatch_queue_create("com.0x1306a94.videoeditor.renderContextQueue", DISPATCH_QUEUE_SERIAL);
+    _renderingQueue          = dispatch_queue_create("com.0x1306a94.videoeditor.renderingQueue", DISPATCH_QUEUE_SERIAL);
+    _renderContextDidChange  = NO;
+    _shouldCancelAllRequests = NO;
 
-    self.sourcePixelBufferAttributes = @{
+    _colorSpaceRef = CGColorSpaceCreateWithName(kCGColorSpaceSRGB) ?: CGColorSpaceCreateDeviceRGB();
+
+    _sourcePixelBufferAttributes = @{
         (__bridge NSString *)kCVPixelBufferPixelFormatTypeKey: @(kCVPixelFormatType_420YpCbCr8BiPlanarFullRange),
         (__bridge NSString *)kCVPixelBufferOpenGLESCompatibilityKey: @YES,
     };
 
-    self.requiredPixelBufferAttributesForRenderContext = @{
+    _requiredPixelBufferAttributesForRenderContext = @{
         (__bridge NSString *)kCVPixelBufferPixelFormatTypeKey: @(kCVPixelFormatType_420YpCbCr8BiPlanarFullRange),
         (__bridge NSString *)kCVPixelBufferOpenGLESCompatibilityKey: @YES,
     };
@@ -139,11 +140,12 @@
     if (instruction.filterName.length > 0) {
         srcImage = [srcImage imageByApplyingFilter:instruction.filterName];
     }
+//    srcImage = [srcImage imageByApplyingFilter:@"CIMotionBlur" withInputParameters:@{@"inputRadius" : @10}];
     desImage = [srcImage imageByCompositingOverImage:backgroundImage];
     if (overlayImage) {
         desImage = [overlayImage imageByCompositingOverImage:desImage];
     }
-    [[KKVideoCompositor sharedCIContext] render:desImage toCVPixelBuffer:outputPixels];
+    [[KKVideoCompositor sharedCIContext] render:desImage toCVPixelBuffer:outputPixels bounds:desImage.extent colorSpace:self.colorSpaceRef];
     return outputPixels;
 }
 
@@ -194,6 +196,12 @@
         }
         self.shouldCancelAllRequests = NO;
     });
+}
+
+- (void)dealloc {
+    if (self.colorSpaceRef) {
+        CGColorSpaceRelease(self.colorSpaceRef);
+    }
 }
 @end
 
