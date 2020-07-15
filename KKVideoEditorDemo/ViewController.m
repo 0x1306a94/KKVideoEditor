@@ -175,10 +175,12 @@
 		KKVideoCompositionInstruction *instruction1                  = [[KKVideoCompositionInstruction alloc] initWithSourceTrackIDs:@[@1, @2] timeRange:CMTimeRangeMake(kCMTimeZero, timeRanges[0].duration)];
 		AVMutableVideoCompositionLayerInstruction *layerInstruction1 = [AVMutableVideoCompositionLayerInstruction videoCompositionLayerInstruction];
 		layerInstruction1.trackID                                    = 1;
-		[layerInstruction1 setOpacityRampFromStartOpacity:1.0 toEndOpacity:0.0 timeRange:CMTimeRangeMake(CMTimeMake(3 * kkVideoEditorCommonTimeScale, kkVideoEditorCommonTimeScale), transitionDuration)];
+//		[layerInstruction1 setOpacityRampFromStartOpacity:1.0 toEndOpacity:0.0 timeRange:CMTimeRangeMake(CMTimeMake(3 * kkVideoEditorCommonTimeScale, kkVideoEditorCommonTimeScale), transitionDuration)];
+		[layerInstruction1 setTransformRampFromStartTransform:CGAffineTransformMakeTranslation(0, 0) toEndTransform:CGAffineTransformMakeTranslation(-1280, 0) timeRange:CMTimeRangeMake(CMTimeMake(3 * kkVideoEditorCommonTimeScale, kkVideoEditorCommonTimeScale), transitionDuration)];
 		AVMutableVideoCompositionLayerInstruction *layerInstruction2 = [AVMutableVideoCompositionLayerInstruction videoCompositionLayerInstruction];
 		layerInstruction2.trackID                                    = 2;
-		[layerInstruction2 setOpacityRampFromStartOpacity:0 toEndOpacity:1.0 timeRange:CMTimeRangeMake(CMTimeMake(3 * kkVideoEditorCommonTimeScale, kkVideoEditorCommonTimeScale), transitionDuration)];
+		[layerInstruction2 setTransformRampFromStartTransform:CGAffineTransformMakeTranslation(1280, 0) toEndTransform:CGAffineTransformIdentity timeRange:CMTimeRangeMake(CMTimeMake(3 * kkVideoEditorCommonTimeScale, kkVideoEditorCommonTimeScale), transitionDuration)];
+//		[layerInstruction2 setOpacityRampFromStartOpacity:0 toEndOpacity:1.0 timeRange:CMTimeRangeMake(CMTimeMake(3 * kkVideoEditorCommonTimeScale, kkVideoEditorCommonTimeScale), transitionDuration)];
 
 		instruction1.layerInstructions = @[layerInstruction1, layerInstruction2];
 		instruction1.backgroundColor   = [CIColor colorWithCGColor:UIColor.blackColor.CGColor];

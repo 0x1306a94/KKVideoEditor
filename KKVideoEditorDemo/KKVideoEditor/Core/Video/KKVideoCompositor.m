@@ -91,16 +91,16 @@
 				CGFloat sy = CGRectGetHeight(extent) / CGRectGetHeight(srcImage.extent);
 				srcImage   = [srcImage imageByApplyingTransform:CGAffineTransformMakeScale(sx, sy)];
 			}
-
+			CMTime time = request.compositionTime;
 			{
 				float startOpacity    = 0;
 				float endOpacity      = 1.0;
 				CMTimeRange timeRange = kCMTimeRangeInvalid;
-				BOOL needOpacity      = NO;
+				BOOL needApply        = NO;
 				float opacity         = 1.0;
-				if ([layerInstruction getOpacityRampForTime:request.compositionTime startOpacity:&startOpacity endOpacity:&endOpacity timeRange:&timeRange]) {
-					if (CMTIMERANGE_IS_VALID(timeRange) && CMTimeRangeContainsTime(timeRange, request.compositionTime)) {
-						needOpacity     = YES;
+				if ([layerInstruction getOpacityRampForTime:time startOpacity:&startOpacity endOpacity:&endOpacity timeRange:&timeRange]) {
+					if (CMTIMERANGE_IS_VALID(timeRange) && CMTimeRangeContainsTime(timeRange, time)) {
+						needApply       = YES;
 						CGFloat percent = kk_factorForTimeInRange(request.compositionTime, timeRange);
 						if (endOpacity > startOpacity) {
 							opacity = percent * (endOpacity - startOpacity) + startOpacity;
@@ -111,10 +111,41 @@
 						}
 					}
 				}
-				if (needOpacity) {
+				if (needApply) {
 					CGFloat values[]      = {0, 0, 0, opacity};
 					CIVector *alphaVector = [CIVector vectorWithValues:values count:4];
 					srcImage              = [srcImage imageByApplyingFilter:@"CIColorMatrix" withInputParameters:@{@"inputAVector": alphaVector}];
+				}
+			}
+
+			{
+				CGAffineTransform startTransform = CGAffineTransformIdentity;
+				CGAffineTransform endTransform   = CGAffineTransformIdentity;
+				CMTimeRange timeRange            = kCMTimeRangeInvalid;
+				if ([layerInstruction getTransformRampForTime:time startTransform:&startTransform endTransform:&endTransform timeRange:&timeRange]) {
+					if (CMTIMERANGE_IS_VALID(timeRange) && CMTimeRangeContainsTime(timeRange, time)) {
+						CGAffineTransform transform = CGAffineTransformIdentity;
+						CGFloat percent             = kk_factorForTimeInRange(request.compositionTime, timeRange);
+						{
+							CGFloat sx = startTransform.a + (endTransform.a - startTransform.a) * percent;
+							CGFloat sy = startTransform.d + (endTransform.d - startTransform.d) * percent;
+							transform  = CGAffineTransformConcat(transform, CGAffineTransformMakeScale(sx, sy));
+						}
+
+						{
+
+							CGFloat rotaion = acos(startTransform.a) + (acos(endTransform.a) - acos(startTransform.a)) * percent;
+							transform       = CGAffineTransformConcat(transform, CGAffineTransformMakeRotation(rotaion));
+						}
+
+						{
+							CGFloat tx = startTransform.tx + (endTransform.tx - startTransform.tx) * percent;
+							CGFloat ty = startTransform.ty + (endTransform.ty - startTransform.ty) * percent;
+							transform  = CGAffineTransformConcat(transform, CGAffineTransformMakeTranslation(tx, ty));
+						}
+
+						srcImage = [srcImage imageByApplyingTransform:transform];
+					}
 				}
 			}
 
