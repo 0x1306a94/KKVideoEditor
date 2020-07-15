@@ -11,20 +11,34 @@
 
 @implementation KKVideoCompositionInstruction
 
-- (instancetype)initWithTimeRange:(CMTimeRange)timeRange {
-    if (self == [super init]) {
-        [self commonInit];
-        _timeRange = timeRange;
-    }
-    return self;
+- (instancetype)initWithPassthroughTrackID:(CMPersistentTrackID)passthroughTrackID timeRange:(CMTimeRange)timeRange {
+	self = [super init];
+	if (self) {
+		_passthroughTrackID     = passthroughTrackID;
+		_timeRange              = timeRange;
+		_requiredSourceTrackIDs = @[];
+		_containsTweening       = NO;
+		_enablePostProcessing   = NO;
+		[self commonInit];
+	}
+	return self;
+}
+
+- (instancetype)initWithSourceTrackIDs:(NSArray<NSValue *> *)sourceTrackIDs timeRange:(CMTimeRange)timeRange {
+	self = [super init];
+	if (self) {
+		_requiredSourceTrackIDs = sourceTrackIDs;
+		_timeRange              = timeRange;
+		_passthroughTrackID     = kCMPersistentTrackID_Invalid;
+		_containsTweening       = YES;
+		_enablePostProcessing   = NO;
+		[self commonInit];
+	}
+	return self;
 }
 
 - (void)commonInit {
-    _timeRange                = kCMTimeRangeZero;
-    self.backgroundColor      = [CIColor colorWithRed:0 green:0 blue:0];
-    self.enablePostProcessing = YES;
-    self.containsTweening     = NO;
-    self.passthroughTrackID   = kCMPersistentTrackID_Invalid;
+	_backgroundColor = [CIColor colorWithRed:0 green:0 blue:0];
 }
 @end
 

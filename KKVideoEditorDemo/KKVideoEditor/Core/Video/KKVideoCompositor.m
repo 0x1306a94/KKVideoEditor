@@ -63,89 +63,82 @@
 
 #pragma mark - private
 - (CVPixelBufferRef)newRenderedPixelBufferForRequest:(AVAsynchronousVideoCompositionRequest *)request {
-	CVPixelBufferRef frameBuffer  = NULL;
-	CVPixelBufferRef outputPixels = [self.renderContext newPixelBuffer];
-	if (request.sourceTrackIDs.count > 0) {
+	if (request.sourceTrackIDs.count == 0) return NULL;
+
+	if (!request.videoCompositionInstruction || ![request.videoCompositionInstruction isKindOfClass:KKVideoCompositionInstruction.class]) {
 		NSNumber *trackID = request.sourceTrackIDs.firstObject;
-		frameBuffer       = [request sourceFrameByTrackID:(CMPersistentTrackID)trackID.integerValue];
-		if (frameBuffer == NULL) {
-			return outputPixels;
-		}
+		return [request sourceFrameByTrackID:(CMPersistentTrackID)trackID.integerValue];
 	}
 
-	if (frameBuffer == NULL) {
-		return outputPixels;
-	}
-	if (!request.videoCompositionInstruction || ![request.videoCompositionInstruction isKindOfClass:KKVideoCompositionInstruction.class]) {
-		return frameBuffer ? frameBuffer : outputPixels;
-	}
+	CVPixelBufferRef outputPixels = [self.renderContext newPixelBuffer];
+
 	KKVideoCompositionInstruction *instruction = (KKVideoCompositionInstruction *)request.videoCompositionInstruction;
 
-	CMTimeRange timeRange = instruction.timeRange;
-
-	// 原始帧
-	CIImage *srcImage = [CIImage imageWithCVPixelBuffer:frameBuffer];
-	// 最终输出帧
-	CIImage *desImage = [CIImage imageWithCVPixelBuffer:outputPixels];
-
-	//    srcImage = [srcImage imageByCroppingToRect:desImage.extent];
-
-	if (!CGSizeEqualToSize(srcImage.extent.size, desImage.extent.size)) {
-		CGFloat tx = (CGRectGetWidth(desImage.extent) - CGRectGetWidth(srcImage.extent)) * 0.5;
-		CGFloat ty = (CGRectGetHeight(desImage.extent) - CGRectGetHeight(srcImage.extent)) * 0.5;
-		srcImage   = [srcImage imageByApplyingTransform:CGAffineTransformMakeTranslation(tx, ty)];
-
-		//        CGFloat sx = CGRectGetWidth(desImage.extent) / CGRectGetWidth(srcImage.extent);
-		//        CGFloat sy = CGRectGetHeight(desImage.extent) / CGRectGetHeight(srcImage.extent);
-		//        srcImage   = [srcImage imageByApplyingTransform:CGAffineTransformMakeScale(sx, sy)];
-	}
+	CGRect extent = {0, 0, request.renderContext.size};
 	// Background
-	CIImage *backgroundImage = [[CIImage imageWithColor:instruction.backgroundColor] imageByCroppingToRect:desImage.extent];
+	CIImage *backgroundImage = [[CIImage imageWithColor:instruction.backgroundColor] imageByCroppingToRect:extent];
 
-	CGFloat percent = (CMTimeGetSeconds(request.compositionTime) >= (floor(CMTimeGetSeconds(CMTimeAdd(timeRange.start, timeRange.duration))))) ? 1.0 : kk_factorForTimeInRange(request.compositionTime, timeRange);
-	//    CGSize overlaySize = CGSizeMake(300, 300);
-	//
-	//    CGRect overlayRect    = (CGRect){0, 0, overlaySize};
-	CIImage *overlayImage = instruction.overlayImage;
+	BOOL dealed = NO;
+	if (instruction.layerInstructions.count > 0) {
+		for (AVMutableVideoCompositionLayerInstruction *layerInstruction in instruction.layerInstructions) {
+			CVPixelBufferRef frameBuffer = [request sourceFrameByTrackID:layerInstruction.trackID];
+			if (frameBuffer == NULL) {
+				continue;
+			}
+			CIImage *srcImage = [CIImage imageWithCVPixelBuffer:frameBuffer];
+			if (!CGSizeEqualToSize(srcImage.extent.size, extent.size)) {
+				CGFloat sx = CGRectGetWidth(extent) / CGRectGetWidth(srcImage.extent);
+				CGFloat sy = CGRectGetHeight(extent) / CGRectGetHeight(srcImage.extent);
+				srcImage   = [srcImage imageByApplyingTransform:CGAffineTransformMakeScale(sx, sy)];
+			}
 
-#warning 测试
-	if (CMTIME_COMPARE_INLINE(timeRange.start, <=, kCMTimeZero)) {
-		CGFloat tx = CGRectGetWidth(desImage.extent) * percent;
-		CGFloat ty = (CGRectGetHeight(desImage.extent) - CGRectGetHeight(overlayImage.extent)) * 0.5;
+			{
+				float startOpacity    = 0;
+				float endOpacity      = 1.0;
+				CMTimeRange timeRange = kCMTimeRangeInvalid;
+				BOOL needOpacity      = NO;
+				float opacity         = 1.0;
+				if ([layerInstruction getOpacityRampForTime:request.compositionTime startOpacity:&startOpacity endOpacity:&endOpacity timeRange:&timeRange]) {
+					if (CMTIMERANGE_IS_VALID(timeRange) && CMTimeRangeContainsTime(timeRange, request.compositionTime)) {
+						needOpacity     = YES;
+						CGFloat percent = kk_factorForTimeInRange(request.compositionTime, timeRange);
+						if (endOpacity > startOpacity) {
+							opacity = percent * (endOpacity - startOpacity) + startOpacity;
+						} else if (startOpacity > endOpacity) {
+							opacity = percent * (startOpacity - endOpacity) + endOpacity;
+						} else {
+							opacity = endOpacity;
+						}
+					}
+				}
+				if (needOpacity) {
+					CGFloat values[]      = {0, 0, 0, opacity};
+					CIVector *alphaVector = [CIVector vectorWithValues:values count:4];
+					srcImage              = [srcImage imageByApplyingFilter:@"CIColorMatrix" withInputParameters:@{@"inputAVector": alphaVector}];
+				}
+			}
 
-		//        CIColor *startColor   = CIColor.redColor;
-		//        CIColor *endColor     = CIColor.greenColor;
-		//        CIColor *overlayColor = kk_interpolationCIColorFrom(startColor, endColor, percent);
-
-		//        overlayImage = [[CIImage imageWithColor:overlayColor] imageByCroppingToRect:overlayRect];
-		//        CGFloat angle = ((percent * 90) * (M_PI / 180.0));
-
-		overlayImage = [overlayImage imageByApplyingTransform:CGAffineTransformMakeTranslation(tx, ty)];
-		//        overlayImage = [overlayImage imageByApplyingTransform:CGAffineTransformMakeRotation(angle)];
-	} else {
-		CGFloat tx = CGRectGetWidth(desImage.extent) - (CGRectGetWidth(desImage.extent) + CGRectGetWidth(overlayImage.extent)) * percent;
-		CGFloat ty = (CGRectGetHeight(desImage.extent) - CGRectGetHeight(overlayImage.extent)) * 0.5;
-
-		//        CIColor *startColor   = CIColor.yellowColor;
-		//        CIColor *endColor     = CIColor.blueColor;
-		//        CIColor *overlayColor = kk_interpolationCIColorFrom(startColor, endColor, percent);
-
-		//        overlayImage = [[CIImage imageWithColor:overlayColor] imageByCroppingToRect:overlayRect];
-
-		//        CGFloat angle = ((percent * 90) * (M_PI / 180.0));
-
-		overlayImage = [overlayImage imageByApplyingTransform:CGAffineTransformMakeTranslation(tx, ty)];
-		//        overlayImage = [overlayImage imageByApplyingTransform:CGAffineTransformMakeRotation(-angle)];
+			if (srcImage) {
+				dealed          = YES;
+				backgroundImage = [srcImage imageByCompositingOverImage:backgroundImage];
+			}
+		}
 	}
-	if (instruction.filterName.length > 0) {
-		srcImage = [srcImage imageByApplyingFilter:instruction.filterName];
+	if (!dealed) {
+
+		NSNumber *trackID            = request.sourceTrackIDs.firstObject;
+		CVPixelBufferRef frameBuffer = [request sourceFrameByTrackID:(CMPersistentTrackID)trackID.integerValue];
+		if (frameBuffer) {
+			CIImage *srcImage = [CIImage imageWithCVPixelBuffer:frameBuffer];
+			if (!CGSizeEqualToSize(srcImage.extent.size, extent.size)) {
+				CGFloat sx = CGRectGetWidth(extent) / CGRectGetWidth(srcImage.extent);
+				CGFloat sy = CGRectGetHeight(extent) / CGRectGetHeight(srcImage.extent);
+				srcImage   = [srcImage imageByApplyingTransform:CGAffineTransformMakeScale(sx, sy)];
+			}
+			backgroundImage = [srcImage imageByCompositingOverImage:backgroundImage];
+		}
 	}
-	//    srcImage = [srcImage imageByApplyingFilter:@"CIMotionBlur" withInputParameters:@{@"inputRadius" : @10}];
-	desImage = [srcImage imageByCompositingOverImage:backgroundImage];
-	if (overlayImage) {
-		desImage = [overlayImage imageByCompositingOverImage:desImage];
-	}
-	[[KKVideoCompositor sharedCIContext] render:desImage toCVPixelBuffer:outputPixels bounds:desImage.extent colorSpace:self.colorSpaceRef];
+	[[KKVideoCompositor sharedCIContext] render:backgroundImage toCVPixelBuffer:outputPixels bounds:backgroundImage.extent colorSpace:self.colorSpaceRef];
 	return outputPixels;
 }
 

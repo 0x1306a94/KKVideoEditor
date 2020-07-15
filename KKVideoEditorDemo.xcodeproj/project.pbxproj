@@ -24,9 +24,14 @@
 		3C5894DF24B9B1C30023B513 /* IMG_3451.jpeg in Resources */ = {isa = PBXBuildFile; fileRef = 3C5894DD24B9B1C30023B513 /* IMG_3451.jpeg */; };
 		3C5894E024B9B1C30023B513 /* IMG_2629.jpeg in Resources */ = {isa = PBXBuildFile; fileRef = 3C5894DE24B9B1C30023B513 /* IMG_2629.jpeg */; };
 		3C5894E324B9B2530023B513 /* KKVideoCompositionLayerInstruction.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C5894E224B9B2530023B513 /* KKVideoCompositionLayerInstruction.m */; };
+		3CB1757D24BEA653000EA1E5 /* KKTimeline.m in Sources */ = {isa = PBXBuildFile; fileRef = 3CB1757C24BEA653000EA1E5 /* KKTimeline.m */; };
+		3CB1758824BEAB6D000EA1E5 /* KKTrackItem.m in Sources */ = {isa = PBXBuildFile; fileRef = 3CB1758724BEAB6D000EA1E5 /* KKTrackItem.m */; };
+		3CB1758B24BEAD97000EA1E5 /* KKResource.m in Sources */ = {isa = PBXBuildFile; fileRef = 3CB1758A24BEAD97000EA1E5 /* KKResource.m */; };
+		5922BEA6522E44692B8C6135 /* Pods_KKVideoEditorDemo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A287E123D01AD0F03DC4508E /* Pods_KKVideoEditorDemo.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		2181497C488388A5D4CA120A /* Pods-KKVideoEditorDemo.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-KKVideoEditorDemo.debug.xcconfig"; path = "Target Support Files/Pods-KKVideoEditorDemo/Pods-KKVideoEditorDemo.debug.xcconfig"; sourceTree = "<group>"; };
 		3C58947124B972310023B513 /* KKVideoEditorDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = KKVideoEditorDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3C58947424B972310023B513 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		3C58947524B972310023B513 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -55,6 +60,18 @@
 		3C5894DE24B9B1C30023B513 /* IMG_2629.jpeg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = IMG_2629.jpeg; sourceTree = "<group>"; };
 		3C5894E124B9B2530023B513 /* KKVideoCompositionLayerInstruction.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = KKVideoCompositionLayerInstruction.h; sourceTree = "<group>"; };
 		3C5894E224B9B2530023B513 /* KKVideoCompositionLayerInstruction.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = KKVideoCompositionLayerInstruction.m; sourceTree = "<group>"; };
+		3CB1757B24BEA653000EA1E5 /* KKTimeline.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = KKTimeline.h; sourceTree = "<group>"; };
+		3CB1757C24BEA653000EA1E5 /* KKTimeline.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = KKTimeline.m; sourceTree = "<group>"; };
+		3CB1757F24BEA6E5000EA1E5 /* KKVideoProvider.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = KKVideoProvider.h; sourceTree = "<group>"; };
+		3CB1758224BEA800000EA1E5 /* KKCompositionTimeRangeProvider.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = KKCompositionTimeRangeProvider.h; sourceTree = "<group>"; };
+		3CB1758324BEA813000EA1E5 /* KKVideoCompositionTrackProvider.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = KKVideoCompositionTrackProvider.h; sourceTree = "<group>"; };
+		3CB1758424BEA81F000EA1E5 /* KKVideoCompositionProvider.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = KKVideoCompositionProvider.h; sourceTree = "<group>"; };
+		3CB1758624BEAB6D000EA1E5 /* KKTrackItem.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = KKTrackItem.h; sourceTree = "<group>"; };
+		3CB1758724BEAB6D000EA1E5 /* KKTrackItem.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = KKTrackItem.m; sourceTree = "<group>"; };
+		3CB1758924BEAD97000EA1E5 /* KKResource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = KKResource.h; sourceTree = "<group>"; };
+		3CB1758A24BEAD97000EA1E5 /* KKResource.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = KKResource.m; sourceTree = "<group>"; };
+		A287E123D01AD0F03DC4508E /* Pods_KKVideoEditorDemo.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_KKVideoEditorDemo.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		BCE51FA37372076827FC3551 /* Pods-KKVideoEditorDemo.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-KKVideoEditorDemo.release.xcconfig"; path = "Target Support Files/Pods-KKVideoEditorDemo/Pods-KKVideoEditorDemo.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -62,18 +79,29 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5922BEA6522E44692B8C6135 /* Pods_KKVideoEditorDemo.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		1B436B5B93AF1304710F0C1E /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				A287E123D01AD0F03DC4508E /* Pods_KKVideoEditorDemo.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		3C58946824B972310023B513 = {
 			isa = PBXGroup;
 			children = (
 				3C5894C424B9A4010023B513 /* KKVideoEditor */,
 				3C58947324B972310023B513 /* KKVideoEditorDemo */,
 				3C58947224B972310023B513 /* Products */,
+				63A6055BAC79B3B5035FF5F8 /* Pods */,
+				1B436B5B93AF1304710F0C1E /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -121,6 +149,9 @@
 		3C5894C524B9A4010023B513 /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				3CB1758524BEAB5A000EA1E5 /* TrackItem */,
+				3CB1757E24BEA6D2000EA1E5 /* Provider */,
+				3CB1757A24BEA615000EA1E5 /* Timeline */,
 				3C5894C624B9A4010023B513 /* Video */,
 			);
 			path = Core;
@@ -162,6 +193,8 @@
 			isa = PBXGroup;
 			children = (
 				3C5894D124B9A4010023B513 /* black_empty.mp4 */,
+				3CB1758924BEAD97000EA1E5 /* KKResource.h */,
+				3CB1758A24BEAD97000EA1E5 /* KKResource.m */,
 			);
 			path = Resource;
 			sourceTree = "<group>";
@@ -175,6 +208,45 @@
 			path = Resource;
 			sourceTree = "<group>";
 		};
+		3CB1757A24BEA615000EA1E5 /* Timeline */ = {
+			isa = PBXGroup;
+			children = (
+				3CB1757B24BEA653000EA1E5 /* KKTimeline.h */,
+				3CB1757C24BEA653000EA1E5 /* KKTimeline.m */,
+			);
+			path = Timeline;
+			sourceTree = "<group>";
+		};
+		3CB1757E24BEA6D2000EA1E5 /* Provider */ = {
+			isa = PBXGroup;
+			children = (
+				3CB1757F24BEA6E5000EA1E5 /* KKVideoProvider.h */,
+				3CB1758224BEA800000EA1E5 /* KKCompositionTimeRangeProvider.h */,
+				3CB1758324BEA813000EA1E5 /* KKVideoCompositionTrackProvider.h */,
+				3CB1758424BEA81F000EA1E5 /* KKVideoCompositionProvider.h */,
+			);
+			path = Provider;
+			sourceTree = "<group>";
+		};
+		3CB1758524BEAB5A000EA1E5 /* TrackItem */ = {
+			isa = PBXGroup;
+			children = (
+				3CB1758624BEAB6D000EA1E5 /* KKTrackItem.h */,
+				3CB1758724BEAB6D000EA1E5 /* KKTrackItem.m */,
+			);
+			path = TrackItem;
+			sourceTree = "<group>";
+		};
+		63A6055BAC79B3B5035FF5F8 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				2181497C488388A5D4CA120A /* Pods-KKVideoEditorDemo.debug.xcconfig */,
+				BCE51FA37372076827FC3551 /* Pods-KKVideoEditorDemo.release.xcconfig */,
+			);
+			name = Pods;
+			path = Pods;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -182,9 +254,11 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 3C5894A024B972320023B513 /* Build configuration list for PBXNativeTarget "KKVideoEditorDemo" */;
 			buildPhases = (
+				3BA7290E1C2DAC98F44E9B05 /* [CP] Check Pods Manifest.lock */,
 				3C58946D24B972310023B513 /* Sources */,
 				3C58946E24B972310023B513 /* Frameworks */,
 				3C58946F24B972310023B513 /* Resources */,
+				D571E159375486170A0022A5 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -245,6 +319,48 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		3BA7290E1C2DAC98F44E9B05 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-KKVideoEditorDemo-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		D571E159375486170A0022A5 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-KKVideoEditorDemo/Pods-KKVideoEditorDemo-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-KKVideoEditorDemo/Pods-KKVideoEditorDemo-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-KKVideoEditorDemo/Pods-KKVideoEditorDemo-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		3C58946D24B972310023B513 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -255,7 +371,10 @@
 				3C58947624B972310023B513 /* AppDelegate.m in Sources */,
 				3C5894E324B9B2530023B513 /* KKVideoCompositionLayerInstruction.m in Sources */,
 				3C5894D424B9A4010023B513 /* KKVideoEditorPreviewView.m in Sources */,
+				3CB1758B24BEAD97000EA1E5 /* KKResource.m in Sources */,
+				3CB1758824BEAB6D000EA1E5 /* KKTrackItem.m in Sources */,
 				3C58948724B972320023B513 /* main.m in Sources */,
+				3CB1757D24BEA653000EA1E5 /* KKTimeline.m in Sources */,
 				3C5894DB24B9A6B10023B513 /* KKVideoEditorFactory.m in Sources */,
 				3C5894D324B9A4010023B513 /* KKVideoCompositor.m in Sources */,
 				3C58947924B972310023B513 /* SceneDelegate.m in Sources */,
@@ -398,6 +517,7 @@
 		};
 		3C5894A124B972320023B513 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 2181497C488388A5D4CA120A /* Pods-KKVideoEditorDemo.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -419,6 +539,7 @@
 		};
 		3C5894A224B972320023B513 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = BCE51FA37372076827FC3551 /* Pods-KKVideoEditorDemo.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;

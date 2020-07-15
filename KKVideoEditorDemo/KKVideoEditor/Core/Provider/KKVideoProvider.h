@@ -5,12 +5,15 @@
 //  Created by king on 2020/7/15.
 //
 
-#import <Foundation/Foundation.h>
+#import "KKCompositionTimeRangeProvider.h"
+#import "KKVideoCompositionProvider.h"
+#import "KKVideoCompositionTrackProvider.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface KKVideoProvider : NSObject
+@protocol KKVideoProvider <KKCompositionTimeRangeProvider, KKVideoCompositionTrackProvider, KKVideoCompositionProvider>
 
 @end
 
 NS_ASSUME_NONNULL_END
+

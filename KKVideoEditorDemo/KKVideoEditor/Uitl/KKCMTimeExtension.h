@@ -9,7 +9,9 @@
 #import <CoreMedia/CMTimeRange.h>
 
 CM_INLINE Float64 kk_factorForTimeInRange(CMTime time, CMTimeRange range) {
-    CMTime elapsed = CMTimeSubtract(time, range.start);
-    return CMTimeGetSeconds(elapsed) / CMTimeGetSeconds(range.duration);
+	CMTime elapsed = CMTimeSubtract(time, range.start);
+	return CMTimeGetSeconds(elapsed) / CMTimeGetSeconds(range.duration);
 }
+
+static const CMTimeScale kkVideoEditorCommonTimeScale = 600;
 

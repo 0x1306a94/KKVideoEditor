@@ -8,6 +8,7 @@
 #import <Foundation/Foundation.h>
 
 #import <AVFoundation/AVVideoCompositing.h>
+#import <AVFoundation/AVVideoComposition.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -25,9 +26,14 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy) NSString *filterName;
 @property (nonatomic, copy) CIImage *overlayImage;
 
+@property (nonatomic, copy) NSArray<AVVideoCompositionLayerInstruction *> *layerInstructions;
+
+@property (nonatomic, assign) CMTimeRange transitionRange;
+
 - (instancetype)init NS_UNAVAILABLE;
 + (instancetype)new NS_UNAVAILABLE;
-- (instancetype)initWithTimeRange:(CMTimeRange)timeRange NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithPassthroughTrackID:(CMPersistentTrackID)passthroughTrackID timeRange:(CMTimeRange)timeRange NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithSourceTrackIDs:(NSArray<NSValue *> *)sourceTrackIDs timeRange:(CMTimeRange)timeRange NS_DESIGNATED_INITIALIZER;
 @end
 
 NS_ASSUME_NONNULL_END
