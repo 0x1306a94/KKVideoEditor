@@ -96,25 +96,15 @@
 				float startOpacity    = 0;
 				float endOpacity      = 1.0;
 				CMTimeRange timeRange = kCMTimeRangeInvalid;
-				BOOL needApply        = NO;
-				float opacity         = 1.0;
+
 				if ([layerInstruction getOpacityRampForTime:time startOpacity:&startOpacity endOpacity:&endOpacity timeRange:&timeRange]) {
 					if (CMTIMERANGE_IS_VALID(timeRange) && CMTimeRangeContainsTime(timeRange, time)) {
-						needApply       = YES;
-						CGFloat percent = kk_factorForTimeInRange(request.compositionTime, timeRange);
-						if (endOpacity > startOpacity) {
-							opacity = percent * (endOpacity - startOpacity) + startOpacity;
-						} else if (startOpacity > endOpacity) {
-							opacity = percent * (startOpacity - endOpacity) + endOpacity;
-						} else {
-							opacity = endOpacity;
-						}
+						CGFloat percent       = kk_factorForTimeInRange(time, timeRange);
+						float opacity         = startOpacity + (endOpacity - startOpacity) * percent;
+						CGFloat values[]      = {0, 0, 0, opacity};
+						CIVector *alphaVector = [CIVector vectorWithValues:values count:4];
+						srcImage              = [srcImage imageByApplyingFilter:@"CIColorMatrix" withInputParameters:@{@"inputAVector": alphaVector}];
 					}
-				}
-				if (needApply) {
-					CGFloat values[]      = {0, 0, 0, opacity};
-					CIVector *alphaVector = [CIVector vectorWithValues:values count:4];
-					srcImage              = [srcImage imageByApplyingFilter:@"CIColorMatrix" withInputParameters:@{@"inputAVector": alphaVector}];
 				}
 			}
 
@@ -125,7 +115,7 @@
 				if ([layerInstruction getTransformRampForTime:time startTransform:&startTransform endTransform:&endTransform timeRange:&timeRange]) {
 					if (CMTIMERANGE_IS_VALID(timeRange) && CMTimeRangeContainsTime(timeRange, time)) {
 						CGAffineTransform transform = CGAffineTransformIdentity;
-						CGFloat percent             = kk_factorForTimeInRange(request.compositionTime, timeRange);
+						CGFloat percent             = kk_factorForTimeInRange(time, timeRange);
 						{
 							CGFloat sx = startTransform.a + (endTransform.a - startTransform.a) * percent;
 							CGFloat sy = startTransform.d + (endTransform.d - startTransform.d) * percent;
