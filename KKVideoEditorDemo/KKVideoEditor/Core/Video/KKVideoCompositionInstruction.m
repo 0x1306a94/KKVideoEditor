@@ -40,5 +40,17 @@
 - (void)commonInit {
 	_backgroundColor = [CIColor colorWithRed:0 green:0 blue:0];
 }
+
+- (NSString *)debugDescription {
+	return [NSString stringWithFormat:@"<%@: %p {{%lld/%d = %.03f}, {%lld/%d = %.03f}}>",
+	                                  NSStringFromClass(self.class),
+	                                  self,
+	                                  self.timeRange.start.value,
+	                                  self.timeRange.start.timescale,
+	                                  CMTimeGetSeconds(self.timeRange.start),
+	                                  self.timeRange.duration.value,
+	                                  self.timeRange.duration.timescale,
+	                                  CMTimeGetSeconds(self.timeRange.duration)];
+}
 @end
 
