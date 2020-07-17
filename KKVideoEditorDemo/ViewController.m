@@ -56,6 +56,75 @@
 	self.periodicTimeObserver = nil;
 }
 
+- (IBAction)export:(UIButton *)sender {
+
+	__block MBProgressHUD *hud = [MBProgressHUD showHUDAddedTo:self.view.window animated:YES];
+	hud.backgroundColor        = [UIColor.blackColor colorWithAlphaComponent:0.6];
+	hud.mode                   = MBProgressHUDModeAnnularDeterminate;
+
+	[self buildComposition:^(AVMutableComposition *composition, AVMutableVideoComposition *videoComposition, AVMutableAudioMix *audioMix) {
+		if (!composition) {
+			[hud hideAnimated:YES afterDelay:1.0];
+			return;
+		}
+
+		NSString *fileName = [NSString stringWithFormat:@"%@.mp4", [NSUUID UUID].UUIDString];
+		NSString *document = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).firstObject;
+		NSURL *outputURL   = [NSURL fileURLWithPath:[document stringByAppendingPathComponent:fileName]];
+
+		AVAssetExportSession *session       = [[AVAssetExportSession alloc] initWithAsset:composition presetName:AVAssetExportPresetHighestQuality];
+		session.shouldOptimizeForNetworkUse = YES;
+		session.outputURL                   = outputURL;
+		session.outputFileType              = AVFileTypeMPEG4;
+		session.videoComposition            = videoComposition;
+		session.audioMix                    = audioMix;
+
+		/* clang-format off */
+		__block NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval:0.05 repeats:YES block:^(NSTimer * _Nonnull timer) {
+			hud.progress = session.progress;
+		}];
+		/* clang-format on */
+
+		[session exportAsynchronouslyWithCompletionHandler:^{
+			dispatch_async(dispatch_get_main_queue(), ^{
+				[timer invalidate];
+				timer = nil;
+				switch (session.status) {
+					case AVAssetExportSessionStatusCompleted: {
+						NSLog(@"%@", outputURL);
+						if (UIVideoAtPathIsCompatibleWithSavedPhotosAlbum(outputURL.path)) {
+							UISaveVideoAtPathToSavedPhotosAlbum(outputURL.path, self, @selector(video:didFinishSavingWithError:contextInfo:), (__bridge void *)hud);
+						}
+						return;
+					}
+					case AVAssetExportSessionStatusFailed: {
+						NSLog(@"%@", session.error);
+						break;
+					}
+					default:
+						break;
+				}
+
+				[hud hideAnimated:YES afterDelay:1.0];
+			});
+		}];
+	}];
+}
+
+//保存视频完成之后的回调
+- (void)video:(NSString *)videoPath didFinishSavingWithError:(NSError *)error contextInfo:(void *)contextInfo {
+	dispatch_async(dispatch_get_main_queue(), ^{
+		MBProgressHUD *hud = (__bridge MBProgressHUD *)contextInfo;
+		if (error) {
+			hud.label.text = @"保存相册错误";
+			NSLog(@"%@", error);
+		} else {
+			hud.label.text = @"保存相册成功";
+		}
+		[hud hideAnimated:YES afterDelay:2.0];
+	});
+}
+
 - (void)buildPlayer {
 
 	__block MBProgressHUD *hud = [MBProgressHUD showHUDAddedTo:self.view.window animated:YES];

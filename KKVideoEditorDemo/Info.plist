@@ -60,5 +60,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>UISupportsDocumentBrowser</key>
+	<true/>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>保存图片,视频到系统相册</string>
 </dict>
 </plist>
