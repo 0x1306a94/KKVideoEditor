@@ -67,7 +67,10 @@
 
 	if (!request.videoCompositionInstruction || ![request.videoCompositionInstruction isKindOfClass:KKVideoCompositionInstruction.class]) {
 		NSNumber *trackID = request.sourceTrackIDs.firstObject;
-		return [request sourceFrameByTrackID:(CMPersistentTrackID)trackID.integerValue];
+		CVPixelBufferRef frameBuffer = [request sourceFrameByTrackID:(CMPersistentTrackID)trackID.integerValue];
+		// 外部会进行 Realse, 所以这里需要 先 Retain
+		CVPixelBufferRetain(frameBuffer);
+		return frameBuffer;
 	}
 
 	CVPixelBufferRef outputPixels = [self.renderContext newPixelBuffer];

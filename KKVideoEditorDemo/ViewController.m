@@ -61,11 +61,12 @@
 	__block MBProgressHUD *hud = [MBProgressHUD showHUDAddedTo:self.view.window animated:YES];
 	hud.backgroundColor        = [UIColor.blackColor colorWithAlphaComponent:0.6];
 	hud.mode                   = MBProgressHUDModeAnnularDeterminate;
-	[self buildComposition:^(AVMutableComposition *composition, AVMutableVideoComposition *videoComposition) {
+	[self buildComposition:^(AVMutableComposition *composition, AVMutableVideoComposition *videoComposition, AVMutableAudioMix *audioMix) {
 		[hud hideAnimated:YES];
 
 		AVPlayerItem *item    = [AVPlayerItem playerItemWithAsset:composition];
 		item.videoComposition = videoComposition;
+		item.audioMix         = audioMix;
 
 		if (self.player) {
 			[self.player replaceCurrentItemWithPlayerItem:item];
@@ -87,7 +88,7 @@
 				return;
 			}
 //	        CMTimeShow(time);
-			if (CMTIME_COMPARE_INLINE(time, >=, self.totalTime)) {
+		   if (CMTIME_COMPARE_INLINE(time, >=, item.duration)) {
 				NSLog(@"end");
 //				[self.player pause];
 //				return;
@@ -110,24 +111,35 @@
 	}];
 }
 
-- (void)buildComposition:(void (^)(AVMutableComposition *composition, AVMutableVideoComposition *videoComposition))completionHandler {
-	AVMutableComposition *composition = [AVMutableComposition compositionWithURLAssetInitializationOptions:@{AVURLAssetPreferPreciseDurationAndTimingKey: @YES}];
+- (void)buildComposition:(void (^)(AVMutableComposition *composition, AVMutableVideoComposition *videoComposition, AVMutableAudioMix *audioMix))completionHandler {
+	AVMutableComposition *composition = [AVMutableComposition composition];
 	CGSize naturalSize                = CGSizeMake(1280, 720);
 	composition.naturalSize           = naturalSize;
 
-	AVMutableCompositionTrack *videoCompositionTrackA = [composition addMutableTrackWithMediaType:AVMediaTypeVideo preferredTrackID:kCMPersistentTrackID_Invalid];
-	AVMutableCompositionTrack *videoCompositionTrackB = [composition addMutableTrackWithMediaType:AVMediaTypeVideo preferredTrackID:kCMPersistentTrackID_Invalid];
+	NSArray<AVMutableCompositionTrack *> *compositionVideoTracks = @[
+		[composition addMutableTrackWithMediaType:AVMediaTypeVideo
+		                         preferredTrackID:kCMPersistentTrackID_Invalid],
+		[composition addMutableTrackWithMediaType:AVMediaTypeVideo
+		                         preferredTrackID:kCMPersistentTrackID_Invalid],
+	];
 
-	NSArray<AVMutableCompositionTrack *> *videoTracks = @[videoCompositionTrackA, videoCompositionTrackB];
-
-	AVMutableCompositionTrack *audioCompositionTrack = [composition addMutableTrackWithMediaType:AVMediaTypeAudio preferredTrackID:kCMPersistentTrackID_Invalid];
+	NSArray<AVMutableCompositionTrack *> *compositionAudioTracks = @[
+		[composition addMutableTrackWithMediaType:AVMediaTypeAudio
+		                         preferredTrackID:kCMPersistentTrackID_Invalid],
+		[composition addMutableTrackWithMediaType:AVMediaTypeAudio
+		                         preferredTrackID:kCMPersistentTrackID_Invalid],
+	];
 
 	AVURLAsset *asset1 = [AVURLAsset URLAssetWithURL:[NSBundle.mainBundle URLForResource:@"bamboo" withExtension:@"mp4"] options:@{AVURLAssetPreferPreciseDurationAndTimingKey: @YES}];
 	AVURLAsset *asset2 = [AVURLAsset URLAssetWithURL:[NSBundle.mainBundle URLForResource:@"sea" withExtension:@"mp4"] options:@{AVURLAssetPreferPreciseDurationAndTimingKey: @YES}];
 
-	NSArray<__kindof AVAsset *> *assets = @[asset1, asset2, asset1];
+	NSArray<__kindof AVAsset *> *assets = @[asset1, asset2, asset1, asset2];
 
-	NSArray<NSString *> *keys = @[@"tracks", @"duration"];
+	NSArray<NSString *> *keys = @[
+		@"tracks",
+		@"duration",
+		@"composable",
+	];
 
 	dispatch_group_t group = dispatch_group_create();
 	dispatch_queue_t queue = dispatch_get_global_queue(0, 0);
@@ -139,10 +151,13 @@
 	dispatch_block_t block = ^{
 		__block CMTime cursorTime = kCMTimeZero;
 		self.totalTime            = kCMTimeZero;
-		CMTime transitionDuration = CMTimeMake(1 * kkVideoEditorCommonTimeScale, kkVideoEditorCommonTimeScale);
+		CMTime transitionDuration = CMTimeMake(1, 1);
 
-		NSInteger count             = assets.count;
-		CMTimeRange *passTimeRanges = alloca(sizeof(CMTimeRange) * count);
+		NSInteger count = assets.count;
+
+		CMTimeRange *passThroughTimeRanges = alloca(sizeof(CMTimeRange) * count);
+		CMTimeRange *transitionTimeRanges  = alloca(sizeof(CMTimeRange) * count);
+
 		for (NSInteger idx = 0; idx < count; idx++) {
 			// 以 A B 轨排布
 			// ------------------------------------
@@ -150,87 +165,106 @@
 			// ------------------------------------
 			// |           | video 2  |                -----> B
 			// ------------------------------------
-			AVMutableCompositionTrack *videoCompositionTrack = videoTracks[idx % 2];
+
+			// 音频 同 视频 A B 轨排布
+			AVMutableCompositionTrack *videoCompositionTrack = compositionVideoTracks[idx % 2];
+			AVMutableCompositionTrack *audioCompositionTrack = compositionAudioTracks[idx % 2];
 
 			AVAsset *obj = assets[idx];
 
-			AVAssetTrack *videoTrack    = [obj tracksWithMediaType:AVMediaTypeVideo].firstObject;
-			AVAssetTrack *audioTrack    = [obj tracksWithMediaType:AVMediaTypeAudio].firstObject;
-			CMTimeRange insertTimeRange = CMTimeRangeMake(kCMTimeZero, CMTimeMake(CMTimeGetSeconds(obj.duration) * kkVideoEditorCommonTimeScale, kkVideoEditorCommonTimeScale));
-			if (idx == 0) {
-				passTimeRanges[idx] = CMTimeRangeMake(kCMTimeZero, insertTimeRange.duration);
-			} else {
-				passTimeRanges[idx] = CMTimeRangeMake(CMTimeAdd(passTimeRanges[idx - 1].start, passTimeRanges[idx - 1].duration), insertTimeRange.duration);
+			AVAssetTrack *videoTrack = [obj tracksWithMediaType:AVMediaTypeVideo].firstObject;
+			AVAssetTrack *audioTrack = [obj tracksWithMediaType:AVMediaTypeAudio].firstObject;
+
+			CMTimeRange assetTimeRange = CMTimeRangeMake(kCMTimeZero, obj.duration);
+
+			[videoCompositionTrack insertTimeRange:assetTimeRange ofTrack:videoTrack atTime:cursorTime error:nil];
+			[audioCompositionTrack insertTimeRange:assetTimeRange ofTrack:audioTrack atTime:cursorTime error:nil];
+
+			passThroughTimeRanges[idx] = CMTimeRangeMake(cursorTime, assetTimeRange.duration);
+
+			if (idx > 0) {
+				passThroughTimeRanges[idx].start    = CMTimeAdd(passThroughTimeRanges[idx].start, transitionDuration);
+				passThroughTimeRanges[idx].duration = CMTimeSubtract(passThroughTimeRanges[idx].duration, transitionDuration);
 			}
-			[videoCompositionTrack insertTimeRange:insertTimeRange ofTrack:videoTrack atTime:cursorTime error:nil];
-			[audioCompositionTrack insertTimeRange:insertTimeRange ofTrack:audioTrack atTime:cursorTime error:nil];
+
+			if (idx + 1 < count) {
+				passThroughTimeRanges[idx].duration = CMTimeSubtract(passThroughTimeRanges[idx].duration, transitionDuration);
+			}
+
 			CMTimeShow(cursorTime);
-			//光标移动到视频末尾处，以便插入下一段视频
-			cursorTime = CMTimeAdd(cursorTime, insertTimeRange.duration);
-			//光标回退转场动画时长的距离，这一段前后视频重叠部分组合成转场动画
-			if (idx < (count - 1)) {
-				cursorTime = CMTimeSubtract(cursorTime, transitionDuration);
+			CMTimeRangeShow(passThroughTimeRanges[idx]);
+
+			cursorTime = CMTimeAdd(cursorTime, assetTimeRange.duration);
+			cursorTime = CMTimeSubtract(cursorTime, transitionDuration);
+
+			if (idx + 1 < count) {
+				transitionTimeRanges[idx] = CMTimeRangeMake(cursorTime, transitionDuration);
 			}
 		}
 
-		// AVMutableComposition 的 duration 为所有片段总时长, 但由于添加了转场,所以应该减去转场时长
-		self.totalTime = cursorTime;
-		NSLog(@"------");
-		CMTimeShow(self.totalTime);
+		NSMutableArray<KKVideoCompositionInstruction *> *instructions          = [NSMutableArray<KKVideoCompositionInstruction *> array];
+		NSMutableArray<AVMutableAudioMixInputParameters *> *audioMixParameters = [NSMutableArray<AVMutableAudioMixInputParameters *> array];
 
-		KKVideoCompositionInstruction *instruction1 = [[KKVideoCompositionInstruction alloc] initWithSourceTrackIDs:@[@1, @2] timeRange:CMTimeRangeMake(kCMTimeZero, passTimeRanges[0].duration)];
-		{
-			AVMutableVideoCompositionLayerInstruction *layerInstruction1 = [AVMutableVideoCompositionLayerInstruction videoCompositionLayerInstruction];
-			layerInstruction1.trackID                                    = 1;
-			[layerInstruction1 setOpacity:0.5 atTime:kCMTimeZero];
-			[layerInstruction1 setOpacityRampFromStartOpacity:1.0 toEndOpacity:0.0 timeRange:CMTimeRangeMake(CMTimeMake(4 * kkVideoEditorCommonTimeScale, kkVideoEditorCommonTimeScale), transitionDuration)];
+		for (NSInteger idx = 0; idx < count; idx++) {
+			AVMutableCompositionTrack *curVideoTrack  = compositionVideoTracks[idx % 2];
+			AVMutableCompositionTrack *nextVideoTrack = compositionVideoTracks[(idx + 1) % 2];
 
-			[layerInstruction1 setTransformRampFromStartTransform:CGAffineTransformMakeTranslation(0, 0) toEndTransform:CGAffineTransformMakeTranslation(-naturalSize.width, 0) timeRange:CMTimeRangeMake(CMTimeMake(4 * kkVideoEditorCommonTimeScale, kkVideoEditorCommonTimeScale), transitionDuration)];
+			AVMutableCompositionTrack *curAudioTrack  = compositionAudioTracks[idx % 2];
+			AVMutableCompositionTrack *nextAudioTrack = compositionAudioTracks[(idx + 1) % 2];
 
-			AVMutableVideoCompositionLayerInstruction *layerInstruction2 = [AVMutableVideoCompositionLayerInstruction videoCompositionLayerInstruction];
-			layerInstruction2.trackID                                    = 2;
-			[layerInstruction2 setTransformRampFromStartTransform:CGAffineTransformMakeTranslation(naturalSize.width, 0) toEndTransform:CGAffineTransformIdentity timeRange:CMTimeRangeMake(CMTimeMake(4 * kkVideoEditorCommonTimeScale, kkVideoEditorCommonTimeScale), transitionDuration)];
-			[layerInstruction2 setOpacityRampFromStartOpacity:0 toEndOpacity:1.0 timeRange:CMTimeRangeMake(CMTimeMake(4 * kkVideoEditorCommonTimeScale, kkVideoEditorCommonTimeScale), transitionDuration)];
+			KKVideoCompositionInstruction *passThroughInstruction = [[KKVideoCompositionInstruction alloc] initWithSourceTrackIDs:@[@(curVideoTrack.trackID)] timeRange:passThroughTimeRanges[idx]];
 
-			instruction1.layerInstructions = @[layerInstruction1, layerInstruction2];
+			AVMutableVideoCompositionLayerInstruction *passThroughLayer = [AVMutableVideoCompositionLayerInstruction videoCompositionLayerInstructionWithAssetTrack:curVideoTrack];
+			passThroughInstruction.layerInstructions                    = @[passThroughLayer];
+
+			[instructions addObject:passThroughInstruction];
+
+			AVMutableAudioMixInputParameters *passThroughAudioMix = [AVMutableAudioMixInputParameters audioMixInputParametersWithTrack:curAudioTrack];
+			[passThroughAudioMix setVolumeRampFromStartVolume:1 toEndVolume:1 timeRange:passThroughTimeRanges[idx]];
+
+			[audioMixParameters addObject:passThroughAudioMix];
+
+			if (idx + 1 < count) {
+				KKVideoCompositionInstruction *transitionInstruction = [[KKVideoCompositionInstruction alloc] initWithSourceTrackIDs:@[@(curVideoTrack.trackID), @(nextVideoTrack.trackID)] timeRange:transitionTimeRanges[idx]];
+
+				AVMutableVideoCompositionLayerInstruction *fromLayer = [AVMutableVideoCompositionLayerInstruction videoCompositionLayerInstructionWithAssetTrack:curVideoTrack];  //当前视频track
+
+				AVMutableVideoCompositionLayerInstruction *toLayer = [AVMutableVideoCompositionLayerInstruction videoCompositionLayerInstructionWithAssetTrack:nextVideoTrack];  //下一个视频track
+
+				[fromLayer setOpacityRampFromStartOpacity:1.0 toEndOpacity:0.0 timeRange:transitionTimeRanges[idx]];
+				[fromLayer setTransformRampFromStartTransform:CGAffineTransformMakeTranslation(0, 0) toEndTransform:CGAffineTransformMakeTranslation(-naturalSize.width, 0) timeRange:transitionTimeRanges[idx]];
+
+				[toLayer setTransformRampFromStartTransform:CGAffineTransformMakeTranslation(naturalSize.width, 0) toEndTransform:CGAffineTransformIdentity timeRange:transitionTimeRanges[idx]];
+				[toLayer setOpacityRampFromStartOpacity:0 toEndOpacity:0.5 timeRange:transitionTimeRanges[idx]];
+
+				transitionInstruction.layerInstructions = @[fromLayer, toLayer];
+
+				[instructions addObject:transitionInstruction];
+
+				AVMutableAudioMixInputParameters *fromAudioMix = [AVMutableAudioMixInputParameters audioMixInputParametersWithTrack:curAudioTrack];
+				AVMutableAudioMixInputParameters *toAudioMix   = [AVMutableAudioMixInputParameters audioMixInputParametersWithTrack:nextAudioTrack];
+
+				[fromAudioMix setVolumeRampFromStartVolume:1 toEndVolume:0 timeRange:transitionTimeRanges[idx]];
+				[toAudioMix setVolumeRampFromStartVolume:0 toEndVolume:1 timeRange:transitionTimeRanges[idx]];
+
+				[audioMixParameters addObject:fromAudioMix];
+				[audioMixParameters addObject:toAudioMix];
+			}
 		}
 
-		instruction1.backgroundColor = [CIColor colorWithCGColor:UIColor.blackColor.CGColor];
+		CMTimeShow(composition.duration);
 
-		KKVideoCompositionInstruction *instruction2 = [[KKVideoCompositionInstruction alloc] initWithSourceTrackIDs:@[@2, @1] timeRange:CMTimeRangeMake(CMTimeAdd(passTimeRanges[0].start, passTimeRanges[0].duration), passTimeRanges[1].duration)];
-		instruction2.backgroundColor                = [CIColor colorWithCGColor:UIColor.blackColor.CGColor];
-
-		{
-			AVMutableVideoCompositionLayerInstruction *layerInstruction1 = [AVMutableVideoCompositionLayerInstruction videoCompositionLayerInstruction];
-			layerInstruction1.trackID                                    = 2;
-			[layerInstruction1 setOpacityRampFromStartOpacity:1.0 toEndOpacity:0.0 timeRange:CMTimeRangeMake(CMTimeMake(8 * kkVideoEditorCommonTimeScale, kkVideoEditorCommonTimeScale), transitionDuration)];
-
-			[layerInstruction1 setTransformRampFromStartTransform:CGAffineTransformMakeTranslation(0, 0) toEndTransform:CGAffineTransformMakeTranslation(-naturalSize.width, 0) timeRange:CMTimeRangeMake(CMTimeMake(8 * kkVideoEditorCommonTimeScale, kkVideoEditorCommonTimeScale), transitionDuration)];
-
-			AVMutableVideoCompositionLayerInstruction *layerInstruction2 = [AVMutableVideoCompositionLayerInstruction videoCompositionLayerInstruction];
-			layerInstruction2.trackID                                    = 1;
-
-			[layerInstruction2 setTransformRampFromStartTransform:CGAffineTransformMakeTranslation(naturalSize.width, 0) toEndTransform:CGAffineTransformIdentity timeRange:CMTimeRangeMake(CMTimeMake(8 * kkVideoEditorCommonTimeScale, kkVideoEditorCommonTimeScale), transitionDuration)];
-//			[layerInstruction2 setOpacityRampFromStartOpacity:0 toEndOpacity:0.2 timeRange:CMTimeRangeMake(CMTimeMake(8 * kkVideoEditorCommonTimeScale, kkVideoEditorCommonTimeScale), transitionDuration)];
-			
-
-			instruction2.layerInstructions = @[layerInstruction1, layerInstruction2];
-		}
-
-		KKVideoCompositionInstruction *instruction3 = [[KKVideoCompositionInstruction alloc] initWithSourceTrackIDs:@[@1,@2] timeRange:CMTimeRangeMake(CMTimeAdd(passTimeRanges[1].start, passTimeRanges[1].duration), passTimeRanges[2].duration)];
-		instruction3.backgroundColor                = [CIColor colorWithCGColor:UIColor.blackColor.CGColor];
-
+		// 添加的指令序列 总时长 需要和 音频轨道总时长一致, 否则会导致 指令序列不会被执行
 		AVMutableVideoComposition *videoComposition = [AVMutableVideoComposition videoComposition];
 		videoComposition.frameDuration              = CMTimeMake(1, 30);
 		videoComposition.renderSize                 = composition.naturalSize;
-		videoComposition.instructions               = @[
-            instruction1,
-            instruction2,
-            instruction3,
-		];
+		videoComposition.instructions               = instructions;
 		videoComposition.customVideoCompositorClass = KKVideoCompositor.class;
 
-		!completionHandler ?: completionHandler(composition, videoComposition);
+		AVMutableAudioMix *audioMix = [AVMutableAudioMix audioMix];
+		audioMix.inputParameters    = audioMixParameters;
+
+		!completionHandler ?: completionHandler(composition, videoComposition, audioMix);
 	};
 
 	dispatch_group_notify(group, dispatch_get_main_queue(), block);
